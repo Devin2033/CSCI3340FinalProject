@@ -13,22 +13,22 @@ Agile Planning:
 
 
 Steps To Run Website From A New Codespace:
-1) Create and activate the virtual environment
+1-Create and activate the virtual environment
 python3 -m venv virt 
 source virt/bin/activate
 
-2) Install Dependencies
+2-Install Dependencies
 pip install -r requirements.txt
 
-3) Run Migrations
+3-Run Migrations
 cd socialApp
 python3 manage.py migrate
 
-4) Create a superuser (optional) 
-(~used to access admin panel/user database~)
+4-Create a superuser (optional) 
+(used to access admin panel/user database)
 python3 manage.py createsuperuser
 
-5) Run Server
+5-Run Server
 python3 manage.py runserver
 
 
