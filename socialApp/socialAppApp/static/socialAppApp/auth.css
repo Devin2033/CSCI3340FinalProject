@@ -1,0 +1,168 @@
+/*
+auth.css file
+
+-All styling for the login & register pages
+-Matches the style and color of the homepage
+-Includes error message styling 
+-Includes responsive tweaks for different screen sizes
+*/
+
+:root {
+    --orange: #ff4500;
+    --orange-dark: #e03d00;
+    --bg: #f7f8fa;
+    --white: #ffffff;
+    --border: #e5e7eb;
+    --text: #111111;
+    --muted: #6b7280;
+    --input-bg: #ffffff;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background-color: var(--bg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/*Card*/
+.auth-card {
+    background-color: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+/*Brand*/
+.brand-logo {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--orange);
+    letter-spacing: -0.5px;
+    margin-bottom: 1.5rem;
+}
+
+/*Headings*/
+.auth-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.3rem;
+}
+
+.auth-desc {
+    color: var(--muted);
+    font-size: 0.875rem;
+    margin-bottom: 1.75rem;
+}
+
+/*Form*/
+.form-label {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.4rem;
+    display: block;
+}
+
+.input-wrapper {
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+
+.auth-input {
+    background-color: var(--input-bg) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text) !important;
+    padding: 0.6rem 0.75rem 0.6rem 2.2rem !important;
+    border-radius: 8px !important;
+    font-size: 0.9rem !important;
+    width: 100%;
+    transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+
+.auth-input::placeholder {
+    color: #adb5bd !important;
+}
+
+.auth-input:focus {
+    border-color: var(--orange) !important;
+    box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.1) !important;
+    outline: none !important;
+}
+
+/*Button*/
+.btn-auth {
+    background-color: var(--orange);
+    color: #fff;
+    border: none;
+    padding: 0.65rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border-radius: 8px;
+    width: 100%;
+    transition: background-color 0.2s, transform 0.1s;
+    cursor: pointer;
+}
+
+.btn-auth:hover {
+    background-color: var(--orange-dark);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.btn-auth:active {
+    transform: translateY(0);
+}
+
+/*Switch link*/
+.auth-switch {
+    text-align: center;
+    margin-top: 1.25rem;
+    font-size: 0.875rem;
+    color: var(--muted);
+}
+
+.auth-switch a {
+    color: var(--orange);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.auth-switch a:hover {
+    text-decoration: underline;
+}
+
+/*Alert*/
+.alert-danger {
+    background-color: #fff5f5;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    padding: 0.6rem 0.85rem;
+    margin-bottom: 1rem;
+}
+
+/*For Responsiveness*/
+@media (max-width: 480px) {
+    body { align-items: flex-start; padding: 1.5rem 1rem; }
+    .auth-card { padding: 1.75rem; box-shadow: none; border: none; }
+}

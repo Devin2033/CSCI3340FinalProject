@@ -1,0 +1,90 @@
+<!--
+register.html file
+
+-Registration page for new users.
+-Contains a form that submists a POST request to the
+ register view in views.py. This creates a new user
+ in the database.
+-Gets users first name, last name, username, email and password.
+-Displays error message if the username of email is taken.
+-->
+
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTRedd - Register</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{% static 'socialAppApp/auth.css' %}">
+</head>
+<body>
+    <div class="auth-card">
+        <div class="brand-logo">UTRedd</div>
+        <h1 class="auth-title">Create account</h1>
+        <p class="auth-desc">Join your student community today.</p>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert-danger">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST" action="{% url 'register' %}">
+            {% csrf_token %}
+
+            <div class="row g-3 mb-3">
+                <div class="col-6">
+                    <label class="form-label">First Name</label>
+                    <div class="input-wrapper">
+                        <i class="bi bi-person input-icon"></i>
+                        <input type="text" name="first_name" class="auth-input" placeholder="First name" required>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <label class="form-label">Last Name</label>
+                    <div class="input-wrapper">
+                        <i class="bi bi-person input-icon"></i>
+                        <input type="text" name="last_name" class="auth-input" placeholder="Last name" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Username</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-at input-icon"></i>
+                    <input type="text" name="username" class="auth-input" placeholder="Choose a username" required>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-envelope input-icon"></i>
+                    <input type="email" name="email" class="auth-input" placeholder="your@email.com" required>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Password</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-lock input-icon"></i>
+                    <input type="password" name="password" class="auth-input" placeholder="Create a password" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-auth">Create Account</button>
+        </form>
+
+        <div class="auth-switch">
+            Already have an account? <a href="{% url 'login' %}">Log in</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

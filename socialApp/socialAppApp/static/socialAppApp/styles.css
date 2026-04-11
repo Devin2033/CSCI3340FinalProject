@@ -1,0 +1,268 @@
+/*
+styles.css file 
+
+-Custom styling for the homepage 
+-Sets the orange color scheme and CSS variables used thoughout
+-Styles navbar, post cards, vote buttons, 
+category badges, sort toggle, and community filter
+-Includes responsive tweaks for different screen sizes
+
+*/
+
+:root {
+    --utredd-orange: #ff4500;
+    --utredd-orange-dark: #e03d00;
+    --bg-light: #f7f8fa;
+    --border-light: #e5e7eb;
+    --text-muted-custom: #6b7280;
+}
+
+body {
+    background-color: var(--bg-light);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/*Navbar*/
+.navbar {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}
+
+.brand-text {
+    color: var(--utredd-orange) !important;
+    font-size: 1.5rem;
+    letter-spacing: -0.5px;
+}
+
+.navbar .nav-link {
+    color: #374151 !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem !important;
+}
+
+.navbar .nav-link:hover {
+    color: var(--utredd-orange) !important;
+}
+
+.navbar .nav-link.active {
+    color: #111 !important;
+}
+
+.todo-btn {
+    border-color: var(--border-light);
+    color: #374151;
+    font-weight: 500;
+    padding: 0.4rem 0.9rem;
+}
+
+.todo-btn:hover {
+    background-color: #f3f4f6;
+    border-color: #d1d5db;
+    color: #111;
+}
+
+.profile-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-light);
+    transition: border-color 0.2s;
+}
+
+.profile-link:hover .profile-img {
+    border-color: var(--utredd-orange);
+}
+
+/*Welcome Section*/
+h1 {
+    font-size: 2rem;
+    color: #111;
+}
+
+.btn-create {
+    background-color: #111;
+    border-color: #111;
+    padding: 0.6rem 1.2rem;
+    font-weight: 500;
+    border-radius: 8px;
+}
+
+.btn-create:hover {
+    background-color: #333;
+    border-color: #333;
+}
+
+/*Filter + Sort*/
+.community-filter {
+    min-width: 200px;
+    border-color: var(--border-light);
+}
+
+.sort-group {
+    background-color: #fff;
+    border-radius: 999px;
+    padding: 4px;
+    border: 1px solid var(--border-light);
+}
+
+.btn-sort {
+    border: none;
+    background: transparent;
+    padding: 0.35rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-muted-custom);
+    border-radius: 999px !important;
+}
+
+.btn-sort:hover {
+    color: #111;
+}
+
+.btn-sort.active {
+    background-color: #f3f4f6;
+    color: #111;
+}
+
+/*Post Cards*/
+.post-card {
+    background-color: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.post-card:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+/*Vote column*/
+.vote-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 32px;
+    color: var(--text-muted-custom);
+}
+
+.vote-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted-custom);
+    padding: 2px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+.vote-btn:hover {
+    color: var(--utredd-orange);
+}
+
+.vote-btn.downvote:hover {
+    color: #6366f1;
+}
+
+.vote-count {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #111;
+    margin: 2px 0;
+}
+
+/* Post content */
+.post-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.post-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.community-badge {
+    background-color: #f3f4f6;
+    color: #374151;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.category-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+}
+
+.cat-internship { background-color: #d1fae5; color: #065f46; }
+.cat-event      { background-color: #ede9fe; color: #6d28d9; }
+.cat-rating     { background-color: #fef3c7; color: #92400e; }
+.cat-question   { background-color: #dbeafe; color: #1e40af; }
+
+.post-author {
+    font-size: 0.78rem;
+    color: var(--text-muted-custom);
+}
+
+.post-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111;
+    margin-bottom: 0.35rem;
+    line-height: 1.4;
+}
+
+.post-excerpt {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+}
+
+.post-footer {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.post-action {
+    background: none;
+    border: none;
+    color: var(--text-muted-custom);
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    transition: background 0.15s, color 0.15s;
+}
+
+.post-action:hover {
+    background-color: #f3f4f6;
+    color: #111;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 576px) {
+    h1 { font-size: 1.5rem; }
+    .post-card { padding: 1rem; }
+    .sort-group { display: none; }
+}
