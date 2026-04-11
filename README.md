@@ -12,6 +12,10 @@ The intention is to make a Reddit-like social app but for college students.
 Agile Planning:
 [Agile Plan (3-6-26).docx](https://github.com/user-attachments/files/25808983/Agile.Plan.3-6-26.docx)
 
+
+Second Preliminary Delivery (4/10/26)
+[Delivery 2 (4_10_26).docx](https://github.com/user-attachments/files/26642937/Delivery.2.4_10_26.docx)
+
 ---
 
 Steps To Run Website From A New Codespace:
