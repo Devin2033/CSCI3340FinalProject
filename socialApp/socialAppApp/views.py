@@ -44,6 +44,12 @@ def register_view(request):
         last_name  = request.POST.get('last_name')
         email      = request.POST.get('email')
         password   = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+
+        #Check if passwords match
+        if password != confirm_password:
+            messages.error(request, "Passwords do not match.")
+            return render(request, "socialAppApp/register.html")
 
         #Check if username already exists
         if User.objects.filter(username=username).exists():
@@ -75,3 +81,21 @@ def register_view(request):
 def logout_view(request):
     logout(request)
     return redirect('login')
+
+def quote_view(request):
+    try:
+        url = "https://zenquotes.io/api/today"
+        response = request.get(url)
+        data = response.json()
+        quote = data[0]['q']
+        author = data[0]['a']
+    except:
+        #in case API is down
+        quote = "He who knows not, and knows not that he knows not, is a fool—shun him. He who knows not, and knows that he knows not, is a child—teach him. He who knows, and knows not that he knows, is asleep—wake him up. He who knows, and knows that he knows, is wise—follow him."
+        author = "Persian Proverb"
+    
+    return render(request, 'socialAppApp/quote.html',
+        {
+            'quote':quote,
+            'author':author
+        })
