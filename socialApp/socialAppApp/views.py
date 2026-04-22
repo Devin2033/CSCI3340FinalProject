@@ -19,12 +19,7 @@ def homepage(request):
         #in case API is down
         quote = "He who knows not, and knows not that he knows not, is a fool—shun him. He who knows not, and knows that he knows not, is a child—teach him. He who knows, and knows not that he knows, is asleep—wake him up. He who knows, and knows that he knows, is wise—follow him."
         author = "Persian Proverb"
-        # context = {
         
-        #     'quote':quote,
-        #     'author':author,
-        #     #'posts
-        # }
     return render(request, 'socialAppApp/index.html',{'quote':quote,'author':author})
 
 

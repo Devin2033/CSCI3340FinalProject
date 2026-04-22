@@ -266,3 +266,45 @@ h1 {
     .post-card { padding: 1rem; }
     .sort-group { display: none; }
 }
+
+/* Quote Card - Social App Style */
+.quote-card {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb; /* Subtle border like a post */
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+    transition: transform 0.2s ease;
+}
+
+/* Optional: Slight lift on hover to make it feel interactive */
+.quote-card:hover {
+    border-color: #d1d5db;
+    background-color: #fafafa;
+}
+
+.quote-text {
+    font-size: 1.15rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: #111827; /* Darker, high-contrast text */
+    margin-bottom: 12px;
+}
+
+.quote-author {
+    font-size: 0.9rem;
+    color: #6b7280; /* Muted text for the author */
+    display: flex;
+    align-items: center;
+}
+
+/* Small dash before author name */
+.quote-author::before {
+    content: "";
+    display: inline-block;
+    width: 12px;
+    height: 2px;
+    background-color: #0d6efd; /* Use your brand color here */
+    margin-right: 8px;
+    border-radius: 2px;
+}
