@@ -3,12 +3,24 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+import requests
 
 
 #Homepage (requires login)
 @login_required(login_url='login')
 def homepage(request):
-    return render(request, 'socialAppApp/index.html')
+    try:
+        url = "https://zenquotes.io/api/today"
+        response = requests.get(url)
+        data = response.json()
+        quote = data[0]['q']
+        author = data[0]['a']
+    except:
+        #in case API is down
+        quote = "He who knows not, and knows not that he knows not, is a fool—shun him. He who knows not, and knows that he knows not, is a child—teach him. He who knows, and knows not that he knows, is asleep—wake him up. He who knows, and knows that he knows, is wise—follow him."
+        author = "Persian Proverb"
+        
+    return render(request, 'socialAppApp/index.html',{'quote':quote,'author':author})
 
 
 #Login
@@ -85,7 +97,7 @@ def logout_view(request):
 def quote_view(request):
     try:
         url = "https://zenquotes.io/api/today"
-        response = request.get(url)
+        response = requests.get(url)
         data = response.json()
         quote = data[0]['q']
         author = data[0]['a']
