@@ -39,6 +39,9 @@ function renderPosts(postList) {
         const saveLabel    = post.saved ? 'Saved' : 'Save';
         const upActive     = post.voted === 'up'   ? 'voted-up'   : '';
         const downActive   = post.voted === 'down' ? 'voted-down' : '';
+        const titleHtml = post.detailUrl
+            ? `<a href="${post.detailUrl}" class="post-title-link">${post.title}</a>`
+            : `<div class="post-title">${post.title}</div>`;
         card.innerHTML = `
             <div class="vote-col">
                 <button class="vote-btn upvote ${upActive}" data-id="${post.id}">
@@ -57,12 +60,12 @@ function renderPosts(postList) {
                     <span class="category-badge cat-${post.category}">${post.categoryLabel}</span>
                     <span class="post-author">Posted by ${post.author} · ${post.time}</span>
                 </div>
-                <div class="post-title">${post.title}</div>
+                <div class="post-title">${titleHtml}</div>
                 <div class="post-excerpt">${post.excerpt}</div>
                 <div class="post-footer">
-                    <button class="post-action">
+                    <a href="${post.detailUrl || '#'}" class="post-action text-decoration-none">
                         <i class="bi bi-chat-left-text"></i> ${post.comments} Comments
-                    </button>
+                    </a>
                     <button class="post-action save-btn" data-id="${post.id}">
                         <i class="bi ${bookmarkIcon}"></i> ${saveLabel}
                     </button>

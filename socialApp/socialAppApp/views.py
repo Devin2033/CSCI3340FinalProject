@@ -4,12 +4,12 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.cache import cache
-from django.db.models import Sum
+from django.db.models import Count, Sum
 from django.contrib.auth import update_session_auth_hash
 from django.http import JsonResponse
 import requests
 
-from .models import Community, Post, SavedPost, PostVote, UserProfile, RegisteredCourse
+from .models import Community, Post, SavedPost, PostVote, Comment, UserProfile, RegisteredCourse
 
 
 _FALLBACK_QUOTE = (
@@ -39,7 +39,10 @@ def _get_quote():
 def homepage(request):
     quote, author = _get_quote()
 
-    posts = Post.objects.select_related('author', 'community').order_by('-created_at')
+    posts = (Post.objects
+             .select_related('author', 'community')
+             .annotate(comment_count=Count('comments'))
+             .order_by('-created_at'))
 
     saved_ids  = set(SavedPost.objects.filter(user=request.user).values_list('post_id', flat=True))
     user_votes = {v.post_id: v.value for v in PostVote.objects.filter(user=request.user)}
@@ -57,7 +60,8 @@ def homepage(request):
             'title':         p.title,
             'excerpt':       p.body,
             'votes':         p.votes,
-            'comments':      0,
+            'comments':      p.comment_count,
+            'detailUrl':     f'/post/{p.pk}/',
             'saved':         p.pk in saved_ids,
             'voted':         user_votes.get(p.pk),
         }
@@ -228,16 +232,19 @@ def profile_view(request):
     posts = (Post.objects
              .filter(author=request.user)
              .select_related('community')
+             .annotate(comment_count=Count('comments'))
              .order_by('-created_at'))
 
-    total_votes = posts.aggregate(total=Sum('votes'))['total'] or 0
-    courses     = RegisteredCourse.objects.filter(user=request.user)
+    total_votes    = posts.aggregate(total=Sum('votes'))['total'] or 0
+    total_comments = Comment.objects.filter(author=request.user).count()
+    courses        = RegisteredCourse.objects.filter(user=request.user)
 
     return render(request, 'socialAppApp/profile.html', {
-        'profile':     profile,
-        'posts':       posts,
-        'total_votes': total_votes,
-        'courses':     courses,
+        'profile':        profile,
+        'posts':          posts,
+        'total_votes':    total_votes,
+        'total_comments': total_comments,
+        'courses':        courses,
     })
 
 
@@ -315,4 +322,34 @@ def remove_course(request, course_id):
         return JsonResponse({'error': 'POST required'}, status=405)
     course = get_object_or_404(RegisteredCourse, pk=course_id, user=request.user)
     course.delete()
+    return JsonResponse({'deleted': True})
+
+
+@login_required(login_url='login')
+def post_detail(request, post_id):
+    post     = get_object_or_404(Post, pk=post_id)
+    comments = post.comments.select_related('author').order_by('created_at')
+    return render(request, 'socialAppApp/post_detail.html', {
+        'post':     post,
+        'comments': comments,
+    })
+
+
+@login_required(login_url='login')
+def add_comment(request, post_id):
+    if request.method != 'POST':
+        return redirect('post_detail', post_id=post_id)
+    post = get_object_or_404(Post, pk=post_id)
+    body = request.POST.get('body', '').strip()
+    if body:
+        Comment.objects.create(body=body, author=request.user, post=post)
+    return redirect('post_detail', post_id=post_id)
+
+
+@login_required(login_url='login')
+def delete_comment(request, comment_id):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    comment = get_object_or_404(Comment, pk=comment_id, author=request.user)
+    comment.delete()
     return JsonResponse({'deleted': True})

@@ -56,6 +56,18 @@ class PostVote(models.Model):
         unique_together = ('user', 'post')
 
 
+class Comment(models.Model):
+    body       = models.TextField()
+    author     = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
+    post       = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self): return f'{self.author.username} on "{self.post.title}"'
+
+    class Meta:
+        ordering = ['created_at']
+
+
 class UserProfile(models.Model):
     YEAR_CHOICES = [
         ('freshman',  'Freshman'),

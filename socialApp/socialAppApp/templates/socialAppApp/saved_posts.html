@@ -64,9 +64,12 @@
                             <span class="category-badge cat-{{ post.category }}">{{ post.get_category_display }}</span>
                             <span class="post-author">Posted by {{ post.author.username }} · {{ post.created_at|date:"M d, Y" }}</span>
                         </div>
-                        <div class="post-title">{{ post.title }}</div>
+                        <a href="{% url 'post_detail' post.pk %}" class="post-title-link d-block mb-1">{{ post.title }}</a>
                         <div class="post-excerpt">{{ post.body|truncatechars:180 }}</div>
                         <div class="post-footer">
+                            <a href="{% url 'post_detail' post.pk %}" class="post-action text-decoration-none">
+                                <i class="bi bi-chat-left-text"></i> Comments
+                            </a>
                             <button class="post-action unsave-btn" data-post-id="{{ post.pk }}">
                                 <i class="bi bi-bookmark-x"></i> Unsave
                             </button>

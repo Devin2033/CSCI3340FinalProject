@@ -15,4 +15,7 @@ urlpatterns = [
     path('profile/edit/', views.edit_profile, name='edit_profile'),
     path('profile/courses/add/', views.add_course, name='add_course'),
     path('profile/courses/<int:course_id>/remove/', views.remove_course, name='remove_course'),
+    path('post/<int:post_id>/', views.post_detail, name='post_detail'),
+    path('post/<int:post_id>/comment/', views.add_comment, name='add_comment'),
+    path('comment/<int:comment_id>/delete/', views.delete_comment, name='delete_comment'),
 ]

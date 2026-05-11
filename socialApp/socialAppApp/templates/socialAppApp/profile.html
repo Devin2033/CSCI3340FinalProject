@@ -100,13 +100,19 @@
 
         <!-- Stats -->
         <div class="row g-2 mb-4">
-            <div class="col-6">
+            <div class="col-4">
                 <div class="border rounded p-3 text-center">
                     <div class="fw-bold fs-4">{{ posts.count }}</div>
                     <div class="text-muted" style="font-size:0.8rem;">Post{{ posts.count|pluralize }}</div>
                 </div>
             </div>
-            <div class="col-6">
+            <div class="col-4">
+                <div class="border rounded p-3 text-center">
+                    <div class="fw-bold fs-4">{{ total_comments }}</div>
+                    <div class="text-muted" style="font-size:0.8rem;">Comment{{ total_comments|pluralize }}</div>
+                </div>
+            </div>
+            <div class="col-4">
                 <div class="border rounded p-3 text-center">
                     <div class="fw-bold fs-4">{{ total_votes }}</div>
                     <div class="text-muted" style="font-size:0.8rem;">Net Votes</div>
@@ -179,8 +185,13 @@
                             <span class="category-badge cat-{{ post.category }}">{{ post.get_category_display }}</span>
                             <span class="post-author">{{ post.created_at|date:"M d, Y" }}</span>
                         </div>
-                        <div class="post-title">{{ post.title }}</div>
+                        <a href="{% url 'post_detail' post.pk %}" class="post-title-link d-block mb-1">{{ post.title }}</a>
                         <div class="post-excerpt">{{ post.body|truncatechars:160 }}</div>
+                        <div class="post-footer">
+                            <a href="{% url 'post_detail' post.pk %}" class="post-action text-decoration-none">
+                                <i class="bi bi-chat-left-text"></i> {{ post.comment_count }} Comment{{ post.comment_count|pluralize }}
+                            </a>
+                        </div>
                     </div>
                 </div>
             {% endfor %}
