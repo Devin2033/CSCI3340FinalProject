@@ -8,9 +8,25 @@ from django.db.models import Count, Sum
 from django.contrib.auth import update_session_auth_hash
 from django.http import JsonResponse
 from django.utils import timezone
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.cache import never_cache
 import requests
 
 from .models import Community, Post, SavedPost, PostVote, Comment, UserCommunity, UserProfile, RegisteredCourse
+
+def _enrich_communities(qs, selected_keys=()):
+    result = []
+    for c in qs:
+        meta = _COMMUNITY_META.get(c.key, {'emoji': '🏛️', 'description': ''})
+        result.append({
+            'key':         c.key,
+            'name':        c.name,
+            'emoji':       meta['emoji'],
+            'description': meta['description'],
+            'selected':    c.key in selected_keys,
+        })
+    return result
+
 
 _COMMUNITY_META = {
     'cs':          {'emoji': '💻', 'description': 'A space for CS students to share internship leads, get help with coursework, and talk about the tech industry.'},
@@ -43,6 +59,8 @@ def _get_quote():
 
 
 #Homepage (requires login)
+@never_cache
+@ensure_csrf_cookie
 @login_required(login_url='login')
 def homepage(request):
     quote, author = _get_quote()
@@ -125,17 +143,21 @@ def register_view(request):
         password         = request.POST.get('password')
         confirm_password = request.POST.get('confirm_password')
 
+        selected_keys   = request.POST.getlist('communities')
+        all_communities = _enrich_communities(Community.objects.order_by('name'), selected_keys)
+
+        def re_render(msg):
+            messages.error(request, msg)
+            return render(request, 'socialAppApp/register.html', {'communities': all_communities})
+
         if password != confirm_password:
-            messages.error(request, "Passwords do not match.")
-            return render(request, "socialAppApp/register.html")
+            return re_render("Passwords do not match.")
 
         if User.objects.filter(username=username).exists():
-            messages.error(request, 'That username is already taken. Please choose another.')
-            return render(request, 'socialAppApp/register.html')
+            return re_render('That username is already taken. Please choose another.')
 
         if User.objects.filter(email=email).exists():
-            messages.error(request, 'An account with that email already exists.')
-            return render(request, 'socialAppApp/register.html')
+            return re_render('An account with that email already exists.')
 
         user = User.objects.create_user(
             username=username,
@@ -145,15 +167,37 @@ def register_view(request):
             password=password
         )
 
+        for key in selected_keys:
+            try:
+                community = Community.objects.get(key=key)
+                UserCommunity.objects.create(user=user, community=community)
+            except Community.DoesNotExist:
+                pass
+
         login(request, user)
         return redirect('homepage')
 
-    return render(request, 'socialAppApp/register.html')
+    return render(request, 'socialAppApp/register.html', {
+        'communities': _enrich_communities(Community.objects.order_by('name')),
+    })
 
 
-#Logout
+def register_check(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    username = request.POST.get('username', '').strip()
+    email    = request.POST.get('email', '').strip()
+    if username and User.objects.filter(username=username).exists():
+        return JsonResponse({'error': 'That username is already taken. Please choose another.'})
+    if email and User.objects.filter(email=email).exists():
+        return JsonResponse({'error': 'An account with that email already exists.'})
+    return JsonResponse({'error': None})
+
+
+#Logout (POST only — prevents logout via GET request)
 def logout_view(request):
-    logout(request)
+    if request.method == 'POST':
+        logout(request)
     return redirect('login')
 
 
@@ -422,6 +466,7 @@ def community_detail(request, key):
     })
 
 
+@ensure_csrf_cookie
 @login_required(login_url='login')
 def post_detail(request, post_id):
     post     = get_object_or_404(Post, pk=post_id)
