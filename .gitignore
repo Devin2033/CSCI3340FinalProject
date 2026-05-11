@@ -7,7 +7,6 @@ __pycache__/
 *.pyo
 
 # Django
-db.sqlite3
 .env
 
 # VS Code

@@ -18,21 +18,21 @@ class PostAdmin(admin.ModelAdmin):
 
 @admin.register(SavedPost)
 class SavedPostAdmin(admin.ModelAdmin):
-    list_display    = ('user', 'post', 'saved_at')
+    list_display = ('user', 'post', 'saved_at')
     readonly_fields = ('saved_at',)
 
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
-    list_display    = ('author', 'post', 'created_at')
-    search_fields   = ('body', 'author__username')
+    list_display  = ('author', 'post', 'created_at')
+    search_fields = ('body', 'author__username')
     readonly_fields = ('created_at',)
 
 
 @admin.register(UserCommunity)
 class UserCommunityAdmin(admin.ModelAdmin):
-    list_display    = ('user', 'community', 'joined_at')
-    list_filter     = ('community',)
+    list_display = ('user', 'community', 'joined_at')
+    list_filter  = ('community',)
     readonly_fields = ('joined_at',)
 
 

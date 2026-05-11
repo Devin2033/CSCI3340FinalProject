@@ -161,8 +161,110 @@ body {
     margin-bottom: 1rem;
 }
 
+/* Register — wider card for community grid */
+.register-card {
+    max-width: 560px;
+}
+
+
+
+/* Community picker */
+.community-picker {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1.25rem;
+}
+
+.community-pick-wrap {
+    margin-bottom: 1rem;
+}
+
+.community-pick-card {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
+    user-select: none;
+}
+
+.picker-visible-check {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    margin-top: 0.2rem;
+    accent-color: var(--orange);
+    cursor: pointer;
+}
+
+.picker-card-emoji {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.picker-card-top {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.25rem;
+}
+
+.picker-card-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #111;
+    transition: color 0.15s;
+}
+
+.picker-card-desc {
+    font-size: 0.75rem;
+    color: var(--muted);
+    line-height: 1.4;
+}
+
+.community-pick-card:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.community-pick-card:has(.picker-visible-check:checked) {
+    border-color: var(--orange);
+    background-color: #fff5f0;
+}
+
+.community-pick-card:has(.picker-visible-check:checked) .picker-card-name {
+    color: var(--orange);
+}
+
+/* Step 2 action row */
+.step2-actions {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+}
+
+.btn-back {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 0.65rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+    white-space: nowrap;
+}
+
+.btn-back:hover {
+    border-color: #9ca3af;
+    color: var(--text);
+}
+
 /*For Responsiveness*/
-@media (max-width: 480px) {
+@media (max-width: 540px) {
     body { align-items: flex-start; padding: 1.5rem 1rem; }
     .auth-card { padding: 1.75rem; box-shadow: none; border: none; }
 }

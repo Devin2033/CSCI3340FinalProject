@@ -46,16 +46,6 @@ class SavedPost(models.Model):
         unique_together = ('user', 'post')
 
 
-class PostVote(models.Model):
-    VOTE_CHOICES = [('up', 'Up'), ('down', 'Down')]
-    user  = models.ForeignKey(User, on_delete=models.CASCADE, related_name='votes')
-    post  = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='user_votes')
-    value = models.CharField(max_length=4, choices=VOTE_CHOICES)
-
-    class Meta:
-        unique_together = ('user', 'post')
-
-
 class UserCommunity(models.Model):
     user      = models.ForeignKey(User,      on_delete=models.CASCADE, related_name='joined_communities')
     community = models.ForeignKey(Community, on_delete=models.CASCADE, related_name='members')
@@ -63,6 +53,16 @@ class UserCommunity(models.Model):
 
     class Meta:
         unique_together = ('user', 'community')
+
+
+class PostVote(models.Model):
+    VOTE_CHOICES = [('up', 'Up'), ('down', 'Down')]
+    user  = models.ForeignKey(User,      on_delete=models.CASCADE, related_name='votes')
+    post  = models.ForeignKey(Post,      on_delete=models.CASCADE, related_name='user_votes')
+    value = models.CharField(max_length=4, choices=VOTE_CHOICES)
+
+    class Meta:
+        unique_together = ('user', 'post')
 
 
 class Comment(models.Model):

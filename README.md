@@ -39,5 +39,12 @@ Steps To Run Website From A New Codespace:
 6-Run Server 
 (python3 manage.py runserver)
 
+Notes: 
+-The project starts with a sample database. Not .gitignored
+-Completing The TODO feature is a future consideration for this project.
 
-Note: The project starts with an empty user database (.gitignore)
+-To check the project Django database. Add "/admin" after the initial webpage url.
+-A sample admin account was created. username: "admin", password: "123"
+
+To keep this main repo clean: 
+The project was worked on a private repo and the commits were passed when ready for final submission.

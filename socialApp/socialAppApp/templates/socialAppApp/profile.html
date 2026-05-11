@@ -8,6 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{% static 'socialAppApp/styles.css' %}">
+    <link rel="icon" type="image/svg+xml" href="{% static 'socialAppApp/favicon.svg' %}">
 </head>
 <body>
 
@@ -82,10 +83,12 @@
             </button>
         </div>
 
+        <!-- Bio -->
         {% if profile.bio %}
             <p class="mb-3" style="font-size:0.95rem;">{{ profile.bio }}</p>
         {% endif %}
 
+        <!-- Links -->
         {% if profile.research_interests or profile.linkedin or profile.github %}
             <div class="d-flex flex-wrap gap-3 mb-4" style="font-size:0.88rem;">
                 {% if profile.research_interests %}
@@ -202,7 +205,7 @@
                         <div class="post-meta">
                             <span class="community-badge"><i class="bi bi-people-fill"></i> {{ post.community.name }}</span>
                             <span class="category-badge cat-{{ post.category }}">{{ post.get_category_display }}</span>
-                            <span class="post-author">{{ post.created_at|date:"M d, Y" }}</span>
+                            <span class="post-author">{{ post.created_at|date:"M d, Y" }}{% if post.edited_at %} · <em>edited</em>{% endif %}</span>
                         </div>
                         <a href="{% url 'post_detail' post.pk %}" class="post-title-link d-block mb-1">{{ post.title }}</a>
                         <div class="post-excerpt">{{ post.body|truncatechars:160 }}</div>

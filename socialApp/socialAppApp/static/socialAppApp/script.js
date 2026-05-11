@@ -4,12 +4,11 @@ script.js file
 -Handles homepage interactivity
 -Reads posts from Django template JSON
 -Dynamically renders post cards into the feed
--Handles upvote/downvote with backend persistence and debounce
--Handles save/unsave with backend persistence
--Handles hot/new/top sort buttons
+-Handles upvote/downvote, hot/new/top sort buttons
 -Handles community filter dropdown
 */
 
+// Read DB posts injected by Django's json_script filter
 const dbPostsEl = document.getElementById('db-posts-data');
 let allPosts = dbPostsEl ? JSON.parse(dbPostsEl.textContent) : [];
 
@@ -35,13 +34,13 @@ function renderPosts(postList) {
     postList.forEach(post => {
         const card = document.createElement('div');
         card.className = 'post-card';
-        const bookmarkIcon = post.saved ? 'bi-bookmark-fill' : 'bi-bookmark';
-        const saveLabel    = post.saved ? 'Saved' : 'Save';
-        const upActive     = post.voted === 'up'   ? 'voted-up'   : '';
-        const downActive   = post.voted === 'down' ? 'voted-down' : '';
         const titleHtml = post.detailUrl
             ? `<a href="${post.detailUrl}" class="post-title-link">${post.title}</a>`
             : `<div class="post-title">${post.title}</div>`;
+        const bookmarkIcon = post.saved ? 'bi-bookmark-fill' : 'bi-bookmark';
+        const saveLabel    = post.saved ? 'Saved' : 'Save';
+        const upActive   = post.voted === 'up'   ? 'voted-up'   : '';
+        const downActive = post.voted === 'down' ? 'voted-down' : '';
         card.innerHTML = `
             <div class="vote-col">
                 <button class="vote-btn upvote ${upActive}" data-id="${post.id}">
@@ -80,16 +79,16 @@ function renderPosts(postList) {
         feed.appendChild(card);
     });
 
-    //Save listeners
+    //Attach save listeners
     document.querySelectorAll('.save-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
-            const id   = btn.dataset.id;
+            const id = btn.dataset.id;
             const post = allPosts.find(p => String(p.id) === id);
-            const res  = await fetch(`/post/${id}/save/`, {
+            const response = await fetch(`/post/${id}/save/`, {
                 method: 'POST',
                 headers: { 'X-CSRFToken': getCsrfToken() },
             });
-            const data = await res.json();
+            const data = await response.json();
             if (post) post.saved = data.saved;
             const icon = btn.querySelector('i');
             icon.className = `bi ${data.saved ? 'bi-bookmark-fill' : 'bi-bookmark'}`;
@@ -97,15 +96,16 @@ function renderPosts(postList) {
         });
     });
 
-    //Vote listeners with debounce
+    //Attach vote listeners
     async function handleVote(btn, direction) {
-        const id      = btn.dataset.id;
-        const post    = allPosts.find(p => String(p.id) === id);
-        const card    = btn.closest('.post-card');
+        const id = btn.dataset.id;
+        const post = allPosts.find(p => String(p.id) === id);
+
+        const card = btn.closest('.post-card');
         const upBtn   = card.querySelector('.vote-btn.upvote');
         const downBtn = card.querySelector('.vote-btn.downvote');
 
-        upBtn.disabled   = true;
+        upBtn.disabled = true;
         downBtn.disabled = true;
 
         try {
@@ -127,7 +127,7 @@ function renderPosts(postList) {
             downBtn.classList.toggle('voted-down', data.voted === 'down');
             downBtn.querySelector('i').className = `bi bi-arrow-down-circle${data.voted === 'down' ? '-fill' : ''}`;
         } finally {
-            upBtn.disabled   = false;
+            upBtn.disabled = false;
             downBtn.disabled = false;
         }
     }
@@ -142,7 +142,7 @@ function renderPosts(postList) {
     document.querySelectorAll('.delete-post-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
             if (!confirm('Are you sure you want to delete this post? This cannot be undone.')) return;
-            const id  = btn.dataset.id;
+            const id = btn.dataset.id;
             const res = await fetch(`/post/${id}/delete/`, {
                 method: 'POST',
                 headers: { 'X-CSRFToken': getCsrfToken() },
@@ -162,6 +162,7 @@ document.querySelectorAll('.btn-sort').forEach(btn => {
         btn.classList.add('active');
 
         const now = Date.now();
+
         function hotScore(post) {
             const ageHours = (now - new Date(post.timestamp).getTime()) / 3_600_000;
             return post.votes / Math.pow(ageHours + 2, 1.5);
@@ -183,7 +184,7 @@ document.querySelectorAll('.btn-sort').forEach(btn => {
 const communityFilterEl = document.getElementById('communityFilter');
 if (communityFilterEl) {
     communityFilterEl.addEventListener('change', (e) => {
-        const val      = e.target.value;
+        const val = e.target.value;
         const filtered = val === 'all' ? allPosts : allPosts.filter(p => p.communityKey === val);
         renderPosts(filtered);
     });
