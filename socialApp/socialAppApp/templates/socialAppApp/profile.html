@@ -1,0 +1,378 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile · UTRedd</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{% static 'socialAppApp/styles.css' %}">
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand fw-bold brand-text" href="{% url 'homepage' %}">UTRedd</a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="mainNav">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'homepage' %}"><i class="bi bi-house-door"></i> Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'saved_posts' %}"><i class="bi bi-bookmark"></i> Saved</a>
+                    </li>
+                </ul>
+
+                <div class="d-flex align-items-center gap-3">
+                    <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
+                    <a href="{% url 'profile' %}" class="profile-link d-flex align-items-center justify-content-center"
+                       style="width:40px;height:40px;border-radius:50%;border:2px solid #1a1a1a;background:#f3f4f6;">
+                        <i class="bi bi-person-fill" style="font-size:1.2rem;color:#1a1a1a;"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4" style="max-width: 760px;">
+
+        {% if messages %}
+            {% for msg in messages %}
+                <div class="alert alert-{{ msg.tags }} alert-dismissible fade show mb-3" role="alert">
+                    {{ msg }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Profile header -->
+        <div class="d-flex align-items-center gap-4 mb-4">
+            <div class="d-flex align-items-center justify-content-center rounded-circle bg-dark text-white fw-bold"
+                 style="width:72px;height:72px;font-size:2rem;flex-shrink:0;">
+                {{ request.user.first_name|first|upper|default:request.user.username|first|upper }}
+            </div>
+            <div>
+                <h1 class="fw-bold mb-0" style="font-size:1.5rem;">
+                    {% if request.user.first_name %}{{ request.user.first_name }} {{ request.user.last_name }}{% else %}{{ request.user.username }}{% endif %}
+                </h1>
+                <div class="text-muted" style="font-size:0.9rem;">@{{ request.user.username }}</div>
+                {% if profile.year or profile.major %}
+                    <div class="text-muted mt-1" style="font-size:0.88rem;">
+                        {% if profile.year %}{{ profile.get_year_display }}{% endif %}{% if profile.year and profile.major %} · {% endif %}{% if profile.major %}{{ profile.major }}{% endif %}
+                    </div>
+                {% endif %}
+            </div>
+            <button class="btn btn-outline-secondary btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#editModal">
+                <i class="bi bi-pencil"></i> Edit Profile
+            </button>
+        </div>
+
+        {% if profile.bio %}
+            <p class="mb-3" style="font-size:0.95rem;">{{ profile.bio }}</p>
+        {% endif %}
+
+        {% if profile.research_interests or profile.linkedin or profile.github %}
+            <div class="d-flex flex-wrap gap-3 mb-4" style="font-size:0.88rem;">
+                {% if profile.research_interests %}
+                    <span class="text-muted"><i class="bi bi-search"></i> {{ profile.research_interests }}</span>
+                {% endif %}
+                {% if profile.linkedin %}
+                    <a href="{{ profile.linkedin }}" target="_blank" rel="noopener" class="text-decoration-none">
+                        <i class="bi bi-linkedin"></i> LinkedIn
+                    </a>
+                {% endif %}
+                {% if profile.github %}
+                    <a href="{{ profile.github }}" target="_blank" rel="noopener" class="text-decoration-none">
+                        <i class="bi bi-github"></i> GitHub
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <!-- Stats -->
+        <div class="row g-2 mb-4">
+            <div class="col-6">
+                <div class="border rounded p-3 text-center">
+                    <div class="fw-bold fs-4">{{ posts.count }}</div>
+                    <div class="text-muted" style="font-size:0.8rem;">Post{{ posts.count|pluralize }}</div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="border rounded p-3 text-center">
+                    <div class="fw-bold fs-4">{{ total_votes }}</div>
+                    <div class="text-muted" style="font-size:0.8rem;">Net Votes</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Registered Courses -->
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <h2 class="fw-semibold mb-0" style="font-size:1rem;">Registered Courses</h2>
+            <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#addCourseForm">
+                <i class="bi bi-plus-lg"></i> Add Course
+            </button>
+        </div>
+
+        <div class="collapse mb-3" id="addCourseForm">
+            <div class="border rounded p-3 bg-light">
+                <div id="courseError" class="alert alert-danger py-2 mb-2 d-none" style="font-size:0.85rem;"></div>
+                <div class="row g-2">
+                    <div class="col-4">
+                        <input type="text" id="courseCode" class="form-control form-control-sm" placeholder="Code (e.g. CSCI 3340)" maxlength="20">
+                    </div>
+                    <div class="col-4">
+                        <input type="text" id="courseName" class="form-control form-control-sm" placeholder="Course name" maxlength="150">
+                    </div>
+                    <div class="col-3">
+                        <input type="text" id="courseSemester" class="form-control form-control-sm" placeholder="Semester (e.g. Fall 2025)" maxlength="30">
+                    </div>
+                    <div class="col-1 d-flex align-items-center">
+                        <button class="btn btn-dark btn-sm w-100" id="saveCourseBtn"><i class="bi bi-check-lg"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="coursesList" class="mb-4">
+            {% if courses %}
+                {% for course in courses %}
+                    <div class="d-flex align-items-center justify-content-between border rounded px-3 py-2 mb-2 course-row" data-id="{{ course.id }}">
+                        <div>
+                            <span class="fw-semibold" style="font-size:0.9rem;">{{ course.course_code }}</span>
+                            <span class="text-muted mx-1">·</span>
+                            <span style="font-size:0.9rem;">{{ course.course_name }}</span>
+                            {% if course.semester %}
+                                <span class="text-muted ms-2" style="font-size:0.8rem;">{{ course.semester }}</span>
+                            {% endif %}
+                        </div>
+                        <button class="btn btn-link text-danger p-0 remove-course-btn" data-id="{{ course.id }}" style="font-size:0.85rem;">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted" id="noCoursesMsg" style="font-size:0.9rem;">No courses added yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- Posts -->
+        <h2 class="fw-semibold mb-3" style="font-size:1rem;">Your Posts</h2>
+
+        {% if posts %}
+            {% for post in posts %}
+                <div class="post-card">
+                    <div class="vote-col">
+                        <span class="vote-count">{{ post.votes }}</span>
+                    </div>
+                    <div class="post-content">
+                        <div class="post-meta">
+                            <span class="community-badge"><i class="bi bi-people-fill"></i> {{ post.community.name }}</span>
+                            <span class="category-badge cat-{{ post.category }}">{{ post.get_category_display }}</span>
+                            <span class="post-author">{{ post.created_at|date:"M d, Y" }}</span>
+                        </div>
+                        <div class="post-title">{{ post.title }}</div>
+                        <div class="post-excerpt">{{ post.body|truncatechars:160 }}</div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-file-earmark-text" style="font-size:2rem;"></i>
+                <p class="mt-2">No posts yet.</p>
+            </div>
+        {% endif %}
+
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form method="post" action="{% url 'edit_profile' %}">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold">Edit Profile</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="form-label fw-semibold">First Name</label>
+                                <input type="text" name="first_name" class="form-control"
+                                       value="{{ request.user.first_name }}" maxlength="30">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-semibold">Last Name</label>
+                                <input type="text" name="last_name" class="form-control"
+                                       value="{{ request.user.last_name }}" maxlength="150">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-semibold">Major</label>
+                                <input type="text" name="major" class="form-control"
+                                       value="{{ profile.major }}" maxlength="100">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-semibold">Year</label>
+                                <select name="year" class="form-select">
+                                    <option value="">— select —</option>
+                                    {% for val, label in profile.YEAR_CHOICES %}
+                                        <option value="{{ val }}" {% if profile.year == val %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Bio</label>
+                                <textarea name="bio" class="form-control" rows="3" maxlength="500">{{ profile.bio }}</textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Research Interests</label>
+                                <input type="text" name="research_interests" class="form-control"
+                                       value="{{ profile.research_interests }}" maxlength="300">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-semibold">LinkedIn URL</label>
+                                <input type="url" name="linkedin" class="form-control"
+                                       value="{{ profile.linkedin }}">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-semibold">GitHub URL</label>
+                                <input type="url" name="github" class="form-control"
+                                       value="{{ profile.github }}">
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+                        <p class="fw-semibold mb-3">Change Password <span class="text-muted fw-normal" style="font-size:0.85rem;">(leave blank to keep current)</span></p>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Current Password</label>
+                                <input type="password" name="current_password" class="form-control">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">New Password</label>
+                                <input type="password" name="new_password" class="form-control">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Confirm New Password</label>
+                                <input type="password" name="confirm_password" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-dark">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function getCsrfToken() {
+            const m = document.cookie.match(/csrftoken=([^;]+)/);
+            return m ? m[1] : '';
+        }
+
+        function buildCourseRow(c) {
+            const div = document.createElement('div');
+            div.className = 'course-row d-flex align-items-center justify-content-between border rounded px-3 py-2 mb-2';
+            div.dataset.id = c.id;
+            div.innerHTML = `
+                <div>
+                    <span class="fw-semibold" style="font-size:0.9rem;">${c.course_code}</span>
+                    <span class="text-muted mx-1">·</span>
+                    <span style="font-size:0.9rem;">${c.course_name}</span>
+                    ${c.semester ? `<span class="text-muted ms-2" style="font-size:0.8rem;">${c.semester}</span>` : ''}
+                </div>
+                <button class="btn btn-link text-danger p-0 remove-course-btn" data-id="${c.id}" style="font-size:0.85rem;">
+                    <i class="bi bi-x-lg"></i>
+                </button>`;
+            div.querySelector('.remove-course-btn').addEventListener('click', removeCourse);
+            return div;
+        }
+
+        async function removeCourse(e) {
+            const id = e.currentTarget.dataset.id;
+            const res = await fetch(`/profile/courses/${id}/remove/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCsrfToken() },
+            });
+            if (res.ok) {
+                document.querySelector(`.course-row[data-id="${id}"]`).remove();
+                if (!document.querySelector('.course-row')) {
+                    const list = document.getElementById('coursesList');
+                    if (!list.querySelector('#noCoursesMsg')) {
+                        const p = document.createElement('p');
+                        p.id = 'noCoursesMsg';
+                        p.className = 'text-muted';
+                        p.style.fontSize = '0.9rem';
+                        p.textContent = 'No courses added yet.';
+                        list.appendChild(p);
+                    }
+                }
+            }
+        }
+
+        document.querySelectorAll('.remove-course-btn').forEach(btn => btn.addEventListener('click', removeCourse));
+
+        document.getElementById('saveCourseBtn').addEventListener('click', async () => {
+            const code     = document.getElementById('courseCode').value.trim();
+            const name     = document.getElementById('courseName').value.trim();
+            const semester = document.getElementById('courseSemester').value.trim();
+            const errBox   = document.getElementById('courseError');
+
+            errBox.classList.add('d-none');
+            if (!code || !name) {
+                errBox.textContent = 'Course code and name are required.';
+                errBox.classList.remove('d-none');
+                return;
+            }
+
+            const body = new URLSearchParams({ course_code: code, course_name: name, semester });
+            const res  = await fetch('/profile/courses/add/', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCsrfToken(), 'Content-Type': 'application/x-www-form-urlencoded' },
+                body,
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                errBox.textContent = data.error;
+                errBox.classList.remove('d-none');
+                return;
+            }
+
+            const list = document.getElementById('coursesList');
+            document.getElementById('noCoursesMsg')?.remove();
+            const newCourse = data.courses.find(c => c.course_code === code && c.semester === semester);
+            if (newCourse) list.appendChild(buildCourseRow(newCourse));
+
+            document.getElementById('courseCode').value     = '';
+            document.getElementById('courseName').value     = '';
+            document.getElementById('courseSemester').value = '';
+            bootstrap.Collapse.getInstance(document.getElementById('addCourseForm'))?.hide();
+        });
+    </script>
+
+    {% if messages %}
+    <script>
+        {% for msg in messages %}
+            {% if msg.tags == 'error' %}
+                new bootstrap.Modal(document.getElementById('editModal')).show();
+            {% endif %}
+        {% endfor %}
+    </script>
+    {% endif %}
+</body>
+</html>

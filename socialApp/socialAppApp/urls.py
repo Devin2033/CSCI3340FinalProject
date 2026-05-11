@@ -11,4 +11,8 @@ urlpatterns = [
     path('saved/', views.saved_posts_view, name='saved_posts'),
     path('post/<int:post_id>/save/', views.toggle_save, name='toggle_save'),
     path('post/<int:post_id>/vote/', views.toggle_vote, name='toggle_vote'),
+    path('profile/', views.profile_view, name='profile'),
+    path('profile/edit/', views.edit_profile, name='edit_profile'),
+    path('profile/courses/add/', views.add_course, name='add_course'),
+    path('profile/courses/<int:course_id>/remove/', views.remove_course, name='remove_course'),
 ]

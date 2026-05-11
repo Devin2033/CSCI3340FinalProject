@@ -4,10 +4,12 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.cache import cache
+from django.db.models import Sum
+from django.contrib.auth import update_session_auth_hash
 from django.http import JsonResponse
 import requests
 
-from .models import Community, Post, SavedPost, PostVote
+from .models import Community, Post, SavedPost, PostVote, UserProfile, RegisteredCourse
 
 
 _FALLBACK_QUOTE = (
@@ -217,3 +219,100 @@ def saved_posts_view(request):
              .select_related('author', 'community')
              .order_by('-saved_by__saved_at'))
     return render(request, 'socialAppApp/saved_posts.html', {'posts': posts})
+
+
+@login_required(login_url='login')
+def profile_view(request):
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+
+    posts = (Post.objects
+             .filter(author=request.user)
+             .select_related('community')
+             .order_by('-created_at'))
+
+    total_votes = posts.aggregate(total=Sum('votes'))['total'] or 0
+    courses     = RegisteredCourse.objects.filter(user=request.user)
+
+    return render(request, 'socialAppApp/profile.html', {
+        'profile':     profile,
+        'posts':       posts,
+        'total_votes': total_votes,
+        'courses':     courses,
+    })
+
+
+@login_required(login_url='login')
+def edit_profile(request):
+    if request.method != 'POST':
+        return redirect('profile')
+
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+
+    VALID_YEARS = {c[0] for c in UserProfile.YEAR_CHOICES}
+    year = request.POST.get('year', '').strip()
+
+    profile.major              = request.POST.get('major', '').strip()[:100]
+    profile.year               = year if year in VALID_YEARS else ''
+    profile.bio                = request.POST.get('bio', '').strip()[:500]
+    profile.research_interests = request.POST.get('research_interests', '').strip()[:300]
+    profile.linkedin           = request.POST.get('linkedin', '').strip()[:200]
+    profile.github             = request.POST.get('github', '').strip()[:200]
+    profile.save()
+
+    first_name = request.POST.get('first_name', '').strip()[:30]
+    last_name  = request.POST.get('last_name', '').strip()[:150]
+    if first_name or last_name:
+        request.user.first_name = first_name
+        request.user.last_name  = last_name
+        request.user.save(update_fields=['first_name', 'last_name'])
+
+    new_password = request.POST.get('new_password', '').strip()
+    if new_password:
+        current_password = request.POST.get('current_password', '').strip()
+        if not request.user.check_password(current_password):
+            messages.error(request, 'Current password is incorrect.')
+            return redirect('profile')
+        if new_password != request.POST.get('confirm_password', '').strip():
+            messages.error(request, 'New passwords do not match.')
+            return redirect('profile')
+        request.user.set_password(new_password)
+        request.user.save()
+        update_session_auth_hash(request, request.user)
+
+    messages.success(request, 'Profile updated.')
+    return redirect('profile')
+
+
+@login_required(login_url='login')
+def add_course(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    code     = request.POST.get('course_code', '').strip()[:20]
+    name     = request.POST.get('course_name', '').strip()[:150]
+    semester = request.POST.get('semester', '').strip()[:30]
+
+    if not code or not name:
+        return JsonResponse({'error': 'Course code and name are required.'}, status=400)
+
+    _, created = RegisteredCourse.objects.get_or_create(
+        user=request.user, course_code=code, semester=semester,
+        defaults={'course_name': name},
+    )
+    if not created:
+        return JsonResponse({'error': 'You already have that course this semester.'}, status=400)
+
+    courses = list(
+        RegisteredCourse.objects.filter(user=request.user)
+        .values('id', 'course_code', 'course_name', 'semester')
+    )
+    return JsonResponse({'courses': courses})
+
+
+@login_required(login_url='login')
+def remove_course(request, course_id):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    course = get_object_or_404(RegisteredCourse, pk=course_id, user=request.user)
+    course.delete()
+    return JsonResponse({'deleted': True})
