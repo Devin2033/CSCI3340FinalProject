@@ -58,7 +58,7 @@ function renderPosts(postList) {
                         <i class="bi bi-people-fill"></i> ${post.community}
                     </span>
                     <span class="category-badge cat-${post.category}">${post.categoryLabel}</span>
-                    <span class="post-author">Posted by ${post.author} · ${post.time}</span>
+                    <span class="post-author">Posted by ${post.author} · ${post.time}${post.edited ? ' · <em>edited</em>' : ''}</span>
                 </div>
                 <div class="post-title">${titleHtml}</div>
                 <div class="post-excerpt">${post.excerpt}</div>
@@ -70,7 +70,10 @@ function renderPosts(postList) {
                         <i class="bi ${bookmarkIcon}"></i> ${saveLabel}
                     </button>
                     ${post.author === currentUsername ? `
-                    <span class="your-post-badge">Your post</span>` : ''}
+                    <span class="your-post-badge">Your post</span>
+                    <button class="post-action text-danger delete-post-btn" data-id="${post.id}">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>` : ''}
                 </div>
             </div>
         `;
@@ -134,6 +137,21 @@ function renderPosts(postList) {
     });
     document.querySelectorAll('.vote-btn.downvote').forEach(btn => {
         btn.addEventListener('click', () => handleVote(btn, 'down'));
+    });
+
+    document.querySelectorAll('.delete-post-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            if (!confirm('Are you sure you want to delete this post? This cannot be undone.')) return;
+            const id  = btn.dataset.id;
+            const res = await fetch(`/post/${id}/delete/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCsrfToken() },
+            });
+            if (res.ok) {
+                btn.closest('.post-card').remove();
+                allPosts = allPosts.filter(p => String(p.id) !== id);
+            }
+        });
     });
 }
 

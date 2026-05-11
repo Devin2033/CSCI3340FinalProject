@@ -7,6 +7,7 @@ from django.core.cache import cache
 from django.db.models import Count, Sum
 from django.contrib.auth import update_session_auth_hash
 from django.http import JsonResponse
+from django.utils import timezone
 import requests
 
 from .models import Community, Post, SavedPost, PostVote, Comment, UserCommunity, UserProfile, RegisteredCourse
@@ -75,6 +76,7 @@ def homepage(request):
             'detailUrl':     f'/post/{p.pk}/',
             'saved':         p.pk in saved_ids,
             'voted':         user_votes.get(p.pk),
+            'edited':        p.edited_at is not None,
         }
         for p in posts
     ]
@@ -336,6 +338,35 @@ def remove_course(request, course_id):
         return JsonResponse({'error': 'POST required'}, status=405)
     course = get_object_or_404(RegisteredCourse, pk=course_id, user=request.user)
     course.delete()
+    return JsonResponse({'deleted': True})
+
+
+@login_required(login_url='login')
+def edit_post(request, post_id):
+    post = get_object_or_404(Post, pk=post_id, author=request.user)
+    VALID_CATEGORIES = {'internship', 'event', 'rating', 'question', 'general'}
+    if request.method == 'POST':
+        title    = request.POST.get('title', '').strip()
+        body     = request.POST.get('body', '').strip()
+        category = request.POST.get('category', '').strip()
+        if not title or not body or category not in VALID_CATEGORIES:
+            messages.error(request, 'Please fill in all fields.')
+        else:
+            post.title     = title
+            post.body      = body
+            post.category  = category
+            post.edited_at = timezone.now()
+            post.save()
+            return redirect('post_detail', post_id=post.pk)
+    return render(request, 'socialAppApp/edit_post.html', {'post': post})
+
+
+@login_required(login_url='login')
+def delete_post(request, post_id):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    post = get_object_or_404(Post, pk=post_id, author=request.user)
+    post.delete()
     return JsonResponse({'deleted': True})
 
 

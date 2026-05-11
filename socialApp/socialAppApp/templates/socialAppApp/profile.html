@@ -207,6 +207,9 @@
                             <a href="{% url 'post_detail' post.pk %}" class="post-action text-decoration-none">
                                 <i class="bi bi-chat-left-text"></i> {{ post.comment_count }} Comment{{ post.comment_count|pluralize }}
                             </a>
+                            <a href="{% url 'edit_post' post.pk %}" class="post-action text-decoration-none">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a>
                         </div>
                     </div>
                 </div>

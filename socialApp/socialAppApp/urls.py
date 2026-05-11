@@ -19,6 +19,8 @@ urlpatterns = [
     path('community/<slug:key>/', views.community_detail, name='community_detail'),
     path('community/<slug:key>/join/', views.toggle_join, name='toggle_join'),
     path('post/<int:post_id>/', views.post_detail, name='post_detail'),
+    path('post/<int:post_id>/edit/', views.edit_post, name='edit_post'),
+    path('post/<int:post_id>/delete/', views.delete_post, name='delete_post'),
     path('post/<int:post_id>/comment/', views.add_comment, name='add_comment'),
     path('comment/<int:comment_id>/delete/', views.delete_comment, name='delete_comment'),
 ]
