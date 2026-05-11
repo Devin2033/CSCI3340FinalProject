@@ -9,7 +9,14 @@ from django.contrib.auth import update_session_auth_hash
 from django.http import JsonResponse
 import requests
 
-from .models import Community, Post, SavedPost, PostVote, Comment, UserProfile, RegisteredCourse
+from .models import Community, Post, SavedPost, PostVote, Comment, UserCommunity, UserProfile, RegisteredCourse
+
+_COMMUNITY_META = {
+    'cs':          {'emoji': '💻', 'description': 'A space for CS students to share internship leads, get help with coursework, and talk about the tech industry.'},
+    'business':    {'emoji': '💼', 'description': 'Connect with fellow business students on topics like finance, marketing, and career development.'},
+    'engineering': {'emoji': '⚙️', 'description': 'A hub for engineering students across all disciplines to collaborate on projects and get help with coursework.'},
+    'biology':     {'emoji': '🔬', 'description': 'For pre-med, research, and life science students navigating tough coursework and lab work.'},
+}
 
 
 _FALLBACK_QUOTE = (
@@ -39,7 +46,11 @@ def _get_quote():
 def homepage(request):
     quote, author = _get_quote()
 
+    joined_ids        = list(request.user.joined_communities.values_list('community_id', flat=True))
+    joined_communities = Community.objects.filter(id__in=joined_ids).order_by('name')
+
     posts = (Post.objects
+             .filter(community_id__in=joined_ids)
              .select_related('author', 'community')
              .annotate(comment_count=Count('comments'))
              .order_by('-created_at'))
@@ -68,13 +79,14 @@ def homepage(request):
         for p in posts
     ]
 
-    db_communities = list(Community.objects.values('name', 'key').order_by('name'))
+    db_communities = [{'name': c.name, 'key': c.key} for c in joined_communities]
 
     return render(request, 'socialAppApp/index.html', {
-        'quote':          quote,
-        'author':         author,
-        'db_posts':       db_posts,
-        'db_communities': db_communities,
+        'quote':           quote,
+        'author':          author,
+        'db_posts':        db_posts,
+        'db_communities':  db_communities,
+        'has_communities': len(joined_ids) > 0,
     })
 
 
@@ -237,6 +249,7 @@ def profile_view(request):
 
     total_votes    = posts.aggregate(total=Sum('votes'))['total'] or 0
     total_comments = Comment.objects.filter(author=request.user).count()
+    communities    = Community.objects.filter(members__user=request.user).order_by('name')
     courses        = RegisteredCourse.objects.filter(user=request.user)
 
     return render(request, 'socialAppApp/profile.html', {
@@ -244,6 +257,7 @@ def profile_view(request):
         'posts':          posts,
         'total_votes':    total_votes,
         'total_comments': total_comments,
+        'communities':    communities,
         'courses':        courses,
     })
 
@@ -323,6 +337,58 @@ def remove_course(request, course_id):
     course = get_object_or_404(RegisteredCourse, pk=course_id, user=request.user)
     course.delete()
     return JsonResponse({'deleted': True})
+
+
+@login_required(login_url='login')
+def communities_list(request):
+    joined_ids = set(request.user.joined_communities.values_list('community_id', flat=True))
+    _ORDER = ['engineering', 'cs', 'biology', 'business']
+    qs = sorted(
+        Community.objects.annotate(
+            post_count=Count('posts', distinct=True),
+            member_count=Count('members', distinct=True),
+        ),
+        key=lambda c: _ORDER.index(c.key) if c.key in _ORDER else 99,
+    )
+    communities = []
+    for c in qs:
+        meta = _COMMUNITY_META.get(c.key, {'emoji': '🏛️', 'description': ''})
+        communities.append({
+            'key':          c.key,
+            'name':         c.name,
+            'emoji':        meta['emoji'],
+            'description':  meta['description'],
+            'post_count':   c.post_count,
+            'member_count': c.member_count,
+            'is_joined':    c.pk in joined_ids,
+        })
+    return render(request, 'socialAppApp/communities.html', {'communities': communities})
+
+
+@login_required(login_url='login')
+def toggle_join(request, key):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    community = get_object_or_404(Community, key=key)
+    obj, created = UserCommunity.objects.get_or_create(user=request.user, community=community)
+    if not created:
+        obj.delete()
+        return JsonResponse({'joined': False})
+    return JsonResponse({'joined': True})
+
+
+@login_required(login_url='login')
+def community_detail(request, key):
+    community = get_object_or_404(Community, key=key)
+    posts = (Post.objects
+             .filter(community=community)
+             .select_related('author', 'community')
+             .annotate(comment_count=Count('comments'))
+             .order_by('-created_at'))
+    return render(request, 'socialAppApp/community_feed.html', {
+        'community': community,
+        'posts':     posts,
+    })
 
 
 @login_required(login_url='login')

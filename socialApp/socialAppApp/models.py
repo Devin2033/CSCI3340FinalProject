@@ -56,6 +56,15 @@ class PostVote(models.Model):
         unique_together = ('user', 'post')
 
 
+class UserCommunity(models.Model):
+    user      = models.ForeignKey(User,      on_delete=models.CASCADE, related_name='joined_communities')
+    community = models.ForeignKey(Community, on_delete=models.CASCADE, related_name='members')
+    joined_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'community')
+
+
 class Comment(models.Model):
     body       = models.TextField()
     author     = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
