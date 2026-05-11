@@ -1,12 +1,13 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.cache import cache
+from django.http import JsonResponse
 import requests
 
-from .models import Community, Post
+from .models import Community, Post, SavedPost, PostVote
 
 
 _FALLBACK_QUOTE = (
@@ -38,6 +39,9 @@ def homepage(request):
 
     posts = Post.objects.select_related('author', 'community').order_by('-created_at')
 
+    saved_ids  = set(SavedPost.objects.filter(user=request.user).values_list('post_id', flat=True))
+    user_votes = {v.post_id: v.value for v in PostVote.objects.filter(user=request.user)}
+
     db_posts = [
         {
             'id':            p.pk,
@@ -52,6 +56,8 @@ def homepage(request):
             'excerpt':       p.body,
             'votes':         p.votes,
             'comments':      0,
+            'saved':         p.pk in saved_ids,
+            'voted':         user_votes.get(p.pk),
         }
         for p in posts
     ]
@@ -68,7 +74,6 @@ def homepage(request):
 
 #Login
 def login_view(request):
-    # If already logged in, go straight to homepage
     if request.user.is_authenticated:
         return redirect('homepage')
 
@@ -89,34 +94,29 @@ def login_view(request):
 
 #Register
 def register_view(request):
-    # If already logged in, go straight to homepage
     if request.user.is_authenticated:
         return redirect('homepage')
 
     if request.method == 'POST':
-        username   = request.POST.get('username')
-        first_name = request.POST.get('first_name')
-        last_name  = request.POST.get('last_name')
-        email      = request.POST.get('email')
-        password   = request.POST.get('password')
+        username         = request.POST.get('username')
+        first_name       = request.POST.get('first_name')
+        last_name        = request.POST.get('last_name')
+        email            = request.POST.get('email')
+        password         = request.POST.get('password')
         confirm_password = request.POST.get('confirm_password')
 
-        #Check if passwords match
         if password != confirm_password:
             messages.error(request, "Passwords do not match.")
             return render(request, "socialAppApp/register.html")
 
-        #Check if username already exists
         if User.objects.filter(username=username).exists():
             messages.error(request, 'That username is already taken. Please choose another.')
             return render(request, 'socialAppApp/register.html')
 
-        #Check if email already exists
         if User.objects.filter(email=email).exists():
             messages.error(request, 'An account with that email already exists.')
             return render(request, 'socialAppApp/register.html')
 
-        #Create the user
         user = User.objects.create_user(
             username=username,
             first_name=first_name,
@@ -125,7 +125,6 @@ def register_view(request):
             password=password
         )
 
-        #Log them in automatically after registering
         login(request, user)
         return redirect('homepage')
 
@@ -167,3 +166,54 @@ def create_post(request):
     Post.objects.create(title=title, body=body, author=request.user,
                         community=community, category=category)
     return redirect('homepage')
+
+
+@login_required(login_url='login')
+def toggle_save(request, post_id):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    post = get_object_or_404(Post, pk=post_id)
+    saved_obj, created = SavedPost.objects.get_or_create(user=request.user, post=post)
+    if not created:
+        saved_obj.delete()
+        return JsonResponse({'saved': False})
+    return JsonResponse({'saved': True})
+
+
+@login_required(login_url='login')
+def toggle_vote(request, post_id):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    direction = request.POST.get('direction')
+    if direction not in ('up', 'down'):
+        return JsonResponse({'error': 'Invalid direction'}, status=400)
+
+    post = get_object_or_404(Post, pk=post_id)
+
+    try:
+        existing = PostVote.objects.get(user=request.user, post=post)
+        if existing.value == direction:
+            post.votes += -1 if direction == 'up' else 1
+            existing.delete()
+            voted = None
+        else:
+            post.votes += 2 if direction == 'up' else -2
+            existing.value = direction
+            existing.save()
+            voted = direction
+    except PostVote.DoesNotExist:
+        PostVote.objects.create(user=request.user, post=post, value=direction)
+        post.votes += 1 if direction == 'up' else -1
+        voted = direction
+
+    post.save()
+    return JsonResponse({'votes': post.votes, 'voted': voted})
+
+
+@login_required(login_url='login')
+def saved_posts_view(request):
+    posts = (Post.objects
+             .filter(saved_by__user=request.user)
+             .select_related('author', 'community')
+             .order_by('-saved_by__saved_at'))
+    return render(request, 'socialAppApp/saved_posts.html', {'posts': posts})

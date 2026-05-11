@@ -35,3 +35,22 @@ class Post(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+
+class SavedPost(models.Model):
+    user     = models.ForeignKey(User, on_delete=models.CASCADE, related_name='saved_posts')
+    post     = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='saved_by')
+    saved_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'post')
+
+
+class PostVote(models.Model):
+    VOTE_CHOICES = [('up', 'Up'), ('down', 'Down')]
+    user  = models.ForeignKey(User, on_delete=models.CASCADE, related_name='votes')
+    post  = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='user_votes')
+    value = models.CharField(max_length=4, choices=VOTE_CHOICES)
+
+    class Meta:
+        unique_together = ('user', 'post')

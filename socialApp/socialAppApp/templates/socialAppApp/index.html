@@ -35,6 +35,9 @@ todo list button, logout button, and profile icon
                     <li class="nav-item">
                         <a class="nav-link active" href="{% url 'homepage' %}"><i class="bi bi-house-door"></i> Home</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'saved_posts' %}"><i class="bi bi-bookmark"></i> Saved</a>
+                    </li>
                 </ul>
 
                 <div class="d-flex align-items-center gap-3">
@@ -144,6 +147,7 @@ todo list button, logout button, and profile icon
 
     {{ db_posts|json_script:"db-posts-data" }}
     {{ db_communities|json_script:"db-communities-data" }}
+    <script>const currentUsername = "{{ request.user.username }}";</script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Auto-open modal if it contains validation errors from a failed submit

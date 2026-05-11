@@ -2,15 +2,21 @@
 script.js file
 
 -Handles homepage interactivity
--Reads posts from Django template JSON (replaces hardcoded sample data)
+-Reads posts from Django template JSON
 -Dynamically renders post cards into the feed
--Handles upvote/downvote, hot/new/top sort buttons
+-Handles upvote/downvote with backend persistence and debounce
+-Handles save/unsave with backend persistence
+-Handles hot/new/top sort buttons
 -Handles community filter dropdown
 */
 
-// Read posts injected by Django's json_script filter
 const dbPostsEl = document.getElementById('db-posts-data');
 let allPosts = dbPostsEl ? JSON.parse(dbPostsEl.textContent) : [];
+
+function getCsrfToken() {
+    const match = document.cookie.match(/csrftoken=([^;]+)/);
+    return match ? match[1] : '';
+}
 
 //Render Posts
 function renderPosts(postList) {
@@ -29,14 +35,18 @@ function renderPosts(postList) {
     postList.forEach(post => {
         const card = document.createElement('div');
         card.className = 'post-card';
+        const bookmarkIcon = post.saved ? 'bi-bookmark-fill' : 'bi-bookmark';
+        const saveLabel    = post.saved ? 'Saved' : 'Save';
+        const upActive     = post.voted === 'up'   ? 'voted-up'   : '';
+        const downActive   = post.voted === 'down' ? 'voted-down' : '';
         card.innerHTML = `
             <div class="vote-col">
-                <button class="vote-btn upvote" data-id="${post.id}">
-                    <i class="bi bi-arrow-up-circle"></i>
+                <button class="vote-btn upvote ${upActive}" data-id="${post.id}">
+                    <i class="bi bi-arrow-up-circle${post.voted === 'up' ? '-fill' : ''}"></i>
                 </button>
                 <span class="vote-count" id="votes-${post.id}">${post.votes}</span>
-                <button class="vote-btn downvote" data-id="${post.id}">
-                    <i class="bi bi-arrow-down-circle"></i>
+                <button class="vote-btn downvote ${downActive}" data-id="${post.id}">
+                    <i class="bi bi-arrow-down-circle${post.voted === 'down' ? '-fill' : ''}"></i>
                 </button>
             </div>
             <div class="post-content">
@@ -53,36 +63,74 @@ function renderPosts(postList) {
                     <button class="post-action">
                         <i class="bi bi-chat-left-text"></i> ${post.comments} Comments
                     </button>
-                    <button class="post-action">
-                        <i class="bi bi-bookmark"></i> Save
+                    <button class="post-action save-btn" data-id="${post.id}">
+                        <i class="bi ${bookmarkIcon}"></i> ${saveLabel}
                     </button>
+                    ${post.author === currentUsername ? `
+                    <span class="your-post-badge">Your post</span>` : ''}
                 </div>
             </div>
         `;
         feed.appendChild(card);
     });
 
-    // Local vote listeners (persistence added in a later commit)
-    document.querySelectorAll('.vote-btn.upvote').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const id = parseInt(btn.dataset.id);
-            const post = allPosts.find(p => p.id === id);
-            if (post) {
-                post.votes++;
-                document.getElementById(`votes-${id}`).textContent = post.votes;
-            }
+    //Save listeners
+    document.querySelectorAll('.save-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id   = btn.dataset.id;
+            const post = allPosts.find(p => String(p.id) === id);
+            const res  = await fetch(`/post/${id}/save/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCsrfToken() },
+            });
+            const data = await res.json();
+            if (post) post.saved = data.saved;
+            const icon = btn.querySelector('i');
+            icon.className = `bi ${data.saved ? 'bi-bookmark-fill' : 'bi-bookmark'}`;
+            btn.childNodes[btn.childNodes.length - 1].textContent = ` ${data.saved ? 'Saved' : 'Save'}`;
         });
     });
 
+    //Vote listeners with debounce
+    async function handleVote(btn, direction) {
+        const id      = btn.dataset.id;
+        const post    = allPosts.find(p => String(p.id) === id);
+        const card    = btn.closest('.post-card');
+        const upBtn   = card.querySelector('.vote-btn.upvote');
+        const downBtn = card.querySelector('.vote-btn.downvote');
+
+        upBtn.disabled   = true;
+        downBtn.disabled = true;
+
+        try {
+            const res = await fetch(`/post/${id}/vote/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken(),
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `direction=${direction}`,
+            });
+            const data = await res.json();
+            if (post) post.voted = data.voted;
+
+            document.getElementById(`votes-${id}`).textContent = data.votes;
+
+            upBtn.classList.toggle('voted-up', data.voted === 'up');
+            upBtn.querySelector('i').className = `bi bi-arrow-up-circle${data.voted === 'up' ? '-fill' : ''}`;
+            downBtn.classList.toggle('voted-down', data.voted === 'down');
+            downBtn.querySelector('i').className = `bi bi-arrow-down-circle${data.voted === 'down' ? '-fill' : ''}`;
+        } finally {
+            upBtn.disabled   = false;
+            downBtn.disabled = false;
+        }
+    }
+
+    document.querySelectorAll('.vote-btn.upvote').forEach(btn => {
+        btn.addEventListener('click', () => handleVote(btn, 'up'));
+    });
     document.querySelectorAll('.vote-btn.downvote').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const id = parseInt(btn.dataset.id);
-            const post = allPosts.find(p => p.id === id);
-            if (post) {
-                post.votes--;
-                document.getElementById(`votes-${id}`).textContent = post.votes;
-            }
-        });
+        btn.addEventListener('click', () => handleVote(btn, 'down'));
     });
 }
 
@@ -93,7 +141,6 @@ document.querySelectorAll('.btn-sort').forEach(btn => {
         btn.classList.add('active');
 
         const now = Date.now();
-
         function hotScore(post) {
             const ageHours = (now - new Date(post.timestamp).getTime()) / 3_600_000;
             return post.votes / Math.pow(ageHours + 2, 1.5);
@@ -115,7 +162,7 @@ document.querySelectorAll('.btn-sort').forEach(btn => {
 const communityFilterEl = document.getElementById('communityFilter');
 if (communityFilterEl) {
     communityFilterEl.addEventListener('change', (e) => {
-        const val = e.target.value;
+        const val      = e.target.value;
         const filtered = val === 'all' ? allPosts : allPosts.filter(p => p.communityKey === val);
         renderPosts(filtered);
     });
